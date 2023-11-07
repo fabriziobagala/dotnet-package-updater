@@ -1,28 +1,20 @@
 # dotnet-bulk-package-updater
 
-A Bash script designed to streamline the process of updating NuGet packages in .NET projects. This tool allows developers to update all NuGet packages across multiple .csproj files or selectively target specific packages, all from the command line.
+A Bash script designed to streamline the process of updating NuGet packages in .NET projects.
 
 ## Features
 
-<!-- - **Bulk Updates**: Update all NuGet packages in a project or across multiple projects with a single command.
-- **Selective Updates**: Specify which packages to update, avoiding the need to update all packages unnecessarily.
-- **Versatile Searching**: Target project files with custom search patterns or use the default to find all `.csproj` files in the directory tree.
-- **Silent Operation**: Perform updates quietly in the background, providing concise and clear output upon completion or when errors occur.
-- **Summary Report**: Get a report of the update process, including the number of packages updated and lists of not found or not outdated packages.
--->
-
-- Bulk updating of all NuGet packages within project files.
-- Targeted updating for specific NuGet packages.
-- Search functionality for .csproj files using customizable patterns.
-- Quiet operation with informative output.
-- Summary report of update results.
+- Update packages in multiple .csproj files at once
+- Selectively update specific packages
+- Include pre-release package versions in updates
+- Provide summary of the update process
 
 ## Prerequisites
 
 To use this script, you need:
 
-- A Unix-like environment with Bash installed.
-- [dotnet CLI](https://dotnet.microsoft.com/en-us/download) installed and accessible from the command line.
+- Bash shell (Unix/Linux/macOS or Windows with WSL/Git Bash)
+- [.NET SDK](https://dotnet.microsoft.com/en-us/download)
 
 ## Installation
 
@@ -32,20 +24,20 @@ To use this script, you need:
    ```bash
    chmod +x dotnet-bulk-package-updater.sh
    ```
+   
 3. Place the script in the root directory of your .NET solution to ensure it can find .csproj files recursively.
 
 ## Usage
 
-Execute the script with the following command structure:
+To use the script, you have the following options:
 
 ```bash
-./dotnet-bulk-package-updater.sh [options]
+./dotnet-bulk-package-updater.sh [-p <projects>] [-k <packages>] [-r]
 ```
 
-### Options
-
-- `-p`: Specify the project(s) to update. You can list multiple projects separated by a semicolon `;`.
-- `-k`: Specify the package(s) to update. You can list multiple packages separated by a semicolon `;`.
+- `-p`: Specify one or multiple project files separated by semicolons (`;`). If omitted, all .csproj files will be considered.
+- `-k`: Specify one or multiple packages separated by semicolons (`;`). If omitted, all outdated packages will be updated.
+- `-r`: Include pre-release versions in the update process.
 
 ### Examples
 
@@ -55,13 +47,19 @@ Execute the script with the following command structure:
   ./dotnet-bulk-package-updater.sh
   ```
 
+- Include pre-release versions in updates:
+
+  ```bash
+  ./dotnet-bulk-package-updater.sh -r
+  ```
+
 - Update all packages in a specific project:
 
   ```bash
   ./dotnet-bulk-package-updater.sh -p "MyProject.csproj"
   ```
   
-- Update all packages in multiple specific projects:
+- Update all packages in specific projects:
 
   ```bash
   ./dotnet-bulk-package-updater.sh -p "MyProject.csproj;MyProject.Tests.csproj"
@@ -73,16 +71,22 @@ Execute the script with the following command structure:
   ./dotnet-bulk-package-updater.sh -k "Newtonsoft.Json"
   ```
 
-- Update multiple specific packages in all projects:
+- Update specific packages in all projects:
 
   ```bash
   ./dotnet-bulk-package-updater.sh -k "Dapper;Newtonsoft.Json"
   ```
 
-- Update multiple specific packages in a specific project:
+- Update specific packages in a specific project:
 
   ```bash
   ./dotnet-bulk-package-updater.sh -p "MyProject.csproj" -k "Dapper;Newtonsoft.Json"
+  ```
+
+- Update specific packages in a specific project including pre-release versions:
+
+  ```bash
+  ./dotnet-bulk-package-updater.sh -p "MyProject.csproj" -k "Dapper;Newtonsoft.Json" -r
   ```
 
 ### Output
@@ -93,47 +97,42 @@ The script provides a succinct output for each action it performs. Upon completi
 3 packages updated, 1 project not found, 2 packages not found, 1 package not outdated
 ```
 
-## Detailed Script Walkthrough
+## Detailed script walkthrough
 
-Below is a section-by-section breakdown of the `dotnet-bulk-package-updater` script:
+### Script structure
 
-### Temporary file management
+1. **Shebang declaration and temporary file**: At the beginning of the script, the shebang (`#!/bin/bash`) is defined, which informs the system that this script should be executed in a Bash environment. Right after, a temporary file is created to track the number of updated packages.
 
-- A temporary file is initialized to keep a count of the number of successfully updated packages.
+2. **Variables**: A variable `include_prerelease` is defined to determine whether or not to include pre-release versions of packages in the update process.
 
-### Function definitions
+3. **Function `update_package`**: This function is responsible for updating a specific package within a .csproj file. It accepts as arguments the path to the .csproj file, the package name, version, and a flag indicating whether to consider pre-release versions.
 
-- The `update_package` function is the workhorse of the script. It takes in three parameters: the path to a `.csproj` file, the name of a NuGet package, and the desired version to update to. It prints update attempts and outcomes to the console and increments the package update count upon success.
+4. **Option parsing**: Option parsing is performed using the getopts construct. The options are `-p` to specify projects, `-k` for packages, and `-r` to include pre-release versions. These options allow users to specify exactly which projects and packages should be updated.
 
-### Option parsing
+5. **Counters**: Several counters are initialized to track the number of not found projects and packages, and non-outdated packages.
 
-- The script parses command-line options `-p` (project files) and `-k` (packages) to tailor the update process. If neither is provided, it defaults to updating all `.csproj` files.
+6. **Project selection**: The case where no specific projects have been provided as input is handled. In this case, the script will consider all .csproj files.
 
-### Input handling
+7. **Splitting inputs**: The inputs for projects and packages are split into arrays to facilitate processing.
 
-- If no specific projects or packages are provided, all `.csproj` files in the directory tree are targeted.
-- The script converts semicolon-separated strings for projects and packages into arrays for easier manipulation.
+8. **Main loop**: The script loops through each specified project. For each project, it checks for .csproj files and then proceeds to loop through them.
 
-### Main update logic
+9. **Package updating**: For each project file found, the script updates all outdated packages if no individual packages have been specified. If specific packages have been provided, it updates only those.
 
-- The script loops through each specified project file and performs updates. If no specific packages are defined, it updates all outdated packages found within a project.
-  
-### Update execution
+10. **Summary and cleanup**: At the end, the script reads the total count of updated packages from the temporary file, then removes the temporary file and provides a summary of the operation, including counters for not found projects and packages, and non-outdated packages.
 
-- Before attempting an update, it checks if a package is outdated to avoid unnecessary operations.
-- The `update_package` function is called with the necessary parameters if an update is deemed required.
+### Additional functions
 
-### Summary and cleanup
+- **Function `pluralize`**: A small utility function that pluralizes a word based on the count provided, to make the output more readable.
 
-- After processing all updates, the script reads the final count of updated packages from the temporary file and then removes the file.
-- A summary message is dynamically constructed to reflect the count of updated packages, and the number of projects and packages that were not found or were already up-to-date.
+- **Construction of summary message**: A summary message is constructed that lists the number of updated packages, the number of projects and packages not found, and the number of non-outdated packages.
 
-### Pluralization utility
+### Error handling considerations
 
-- The `pluralize` function is a small utility to ensure proper grammar in the summary by pluralizing words based on their count.
+- **Success operation check**: After each attempt to update a package, the script checks if the operation succeeded and increments the counter accordingly. If it fails, it provides an error message.
 
-Each section is integral to ensuring the script runs smoothly and provides the user with a clear and concise output, making package management in .NET projects much simpler and more automated.
-
+- **Handling of not found files and non-outdated packages**: If a project script or a package is not found, or if a package is not outdated, the script handles these cases without interrupting execution, providing an informative message.
+    
 ## Troubleshooting
 
 If you encounter any issues while running the script, ensure that:
