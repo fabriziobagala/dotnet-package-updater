@@ -24,8 +24,14 @@ To use this script, you need:
    ```bash
    chmod +x dotnet-bulk-package-updater.sh
    ```
+
+3. (Optional): If you are using a Unix-based system, you may want to ensure that the line endings in the script file are in the Unix format. You can do this by running the `dos2unix` command on the script:
+
+   ```bash
+   dos2unix dotnet-bulk-package-updater.sh
+   ```
    
-3. Place the script in the root directory of your .NET solution to ensure it can find .csproj files recursively.
+4. Place the script in the root directory of your .NET solution to ensure it can find .csproj files recursively.
 
 ## Usage
 
