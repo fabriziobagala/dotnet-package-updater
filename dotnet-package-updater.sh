@@ -17,7 +17,7 @@ update_package() {
   local version=$3
   local prerelease_flag=$4
 
-  # Updating process message with package name in single quotes
+  # Update process message with package name in single quotes
   printf "Updating '%s' to version %s in %s... " "$pkg" "$version" "$csproj"
 
   # Attempt to update the package, including prerelease if specified
@@ -38,7 +38,7 @@ update_package() {
   fi
 }
 
-# Parsing options for projects and packages
+# Parse options for projects and packages
 while getopts "p:k:r" opt; do
   case $opt in
     p) projects_input="$OPTARG" ;;
